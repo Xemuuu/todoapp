@@ -1,26 +1,82 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { Category } from './entities/category.entity';
 
 @Injectable()
 export class CategoriesService {
-  create(createCategoryDto: CreateCategoryDto) {
-    return 'This action adds a new category';
+  constructor(
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
+  ) {}
+
+  async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
+    // Check if category with same name already exists for this user
+    const existing = await this.categoryRepository.findOne({
+      where: {
+        name: createCategoryDto.name,
+        userId: createCategoryDto.userId,
+      },
+    });
+
+    if (existing) {
+      throw new ConflictException(
+        `Category with name "${createCategoryDto.name}" already exists`,
+      );
+    }
+
+    const category = this.categoryRepository.create(createCategoryDto);
+    return await this.categoryRepository.save(category);
   }
 
-  findAll() {
-    return `This action returns all categories`;
+  async findAll(userId: number): Promise<Category[]> {
+    return await this.categoryRepository.find({
+      where: { userId },
+      relations: ['tasks'],
+      order: { name: 'ASC' },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} category`;
+  async findOne(id: number, userId: number): Promise<Category> {
+    const category = await this.categoryRepository.findOne({
+      where: { id, userId },
+      relations: ['tasks'],
+    });
+
+    if (!category) {
+      throw new NotFoundException(`Category with ID ${id} not found`);
+    }
+
+    return category;
   }
 
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${id} category`;
+  async update(id: number, userId: number, updateCategoryDto: UpdateCategoryDto): Promise<Category> {
+    const category = await this.findOne(id, userId);
+
+    // Check for name conflict if name is being updated
+    if (updateCategoryDto.name && updateCategoryDto.name !== category.name) {
+      const existing = await this.categoryRepository.findOne({
+        where: {
+          name: updateCategoryDto.name,
+          userId,
+        },
+      });
+
+      if (existing) {
+        throw new ConflictException(
+          `Category with name "${updateCategoryDto.name}" already exists`,
+        );
+      }
+    }
+
+    Object.assign(category, updateCategoryDto);
+    return await this.categoryRepository.save(category);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} category`;
+  async remove(id: number, userId: number): Promise<void> {
+    const category = await this.findOne(id, userId);
+    await this.categoryRepository.remove(category);
   }
 }
