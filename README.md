@@ -178,19 +178,19 @@ Frontend będzie dostępny pod adresem: `http://localhost:5173`
 ### Zrzuty ekranu
 
 #### Strona logowania
-![Login Page](docs/screenshots/login.png)
+![Login Page](img/login.png)
 *Strona logowania z animowanym tłem i glassmorphism*
 
 #### Widok kalendarza
-![Calendar View](docs/screenshots/calendar.png)
+![Calendar View](img/calendar.png)
 *Tygodniowy widok kalendarza z dynamicznymi wysokościami godzin*
 
 #### Widok Kanban
-![Kanban View](docs/screenshots/kanban.png)
+![Kanban View](img/kanban.png)
 *Tablica Kanban z 4 kolumnami statusów*
 
 #### Dialog zadania
-![Task Dialog](docs/screenshots/task-dialog.png)
+![Task Dialog](img/task-dialog.png)
 *Formularz tworzenia/edycji zadania z glassmorphism*
 
 ---

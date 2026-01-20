@@ -26,7 +26,6 @@ export const WeekView = ({ tasks, weekStart, onTaskClick }: WeekViewProps) => {
 
   // Parsuj datę jako lokalny czas (ignoruj UTC)
   const parseLocalDate = (dateString: string): Date => {
-    // Usuń 'Z' jeśli istnieje, żeby JavaScript parsował jako lokalny czas
     const cleanDate = dateString.replace('Z', '');
     return new Date(cleanDate);
   };
@@ -155,7 +154,6 @@ export const WeekView = ({ tasks, weekStart, onTaskClick }: WeekViewProps) => {
         height += hourHeight;
       }
     }
-    // Dodaj fragment ostatniej godziny jeśli task kończy się w trakcie godziny
     if (endHour > endHourFloor) {
       height += (endHour - endHourFloor) * getHourHeight(endHourFloor);
     }
@@ -163,7 +161,7 @@ export const WeekView = ({ tasks, weekStart, onTaskClick }: WeekViewProps) => {
 
     return {
       top: `${top}px`,
-      height: `${Math.max(height, 80)}px`, // Minimalna wysokość 80px
+      height: `${Math.max(height, 80)}px`, 
       left: `${gap}px`,
       right: `${gap}px`,
     };
@@ -207,7 +205,6 @@ export const WeekView = ({ tasks, weekStart, onTaskClick }: WeekViewProps) => {
       return { bg: '#E3F2FD', color: '#1565C0' };
     }
     
-    // Konwertuj hex na RGB i zrób bardzo jasną wersję
     const hexToRgb = (hex: string) => {
       const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
       return result ? {
@@ -219,10 +216,9 @@ export const WeekView = ({ tasks, weekStart, onTaskClick }: WeekViewProps) => {
     
     const rgb = hexToRgb(color);
     
-    // Bardzo jasne tło (95% białego + 5% koloru)
+
     const bg = `rgba(${Math.round(rgb.r * 0.05 + 255 * 0.95)}, ${Math.round(rgb.g * 0.05 + 255 * 0.95)}, ${Math.round(rgb.b * 0.05 + 255 * 0.95)}, 0.8)`;
-    
-    // Ciemniejszy kolor tekstu (70% koloru)
+
     const textColor = `rgb(${Math.round(rgb.r * 0.7)}, ${Math.round(rgb.g * 0.7)}, ${Math.round(rgb.b * 0.7)})`;
     
     return { bg, color: textColor };

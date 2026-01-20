@@ -68,48 +68,114 @@ async function seed() {
   console.log('📝 Creating tasks...');
   const taskRepo = dataSource.getRepository(Task);
 
+  // Helper to get date for current week
+  const today = new Date();
+  const currentDay = today.getDay();
+  const diff = today.getDate() - currentDay + (currentDay === 0 ? -6 : 1); // Monday as start
+  const monday = new Date(today.setDate(diff));
+  monday.setHours(0, 0, 0, 0);
+
+  const getDate = (dayOffset: number, hour: number, minute: number = 0) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + dayOffset);
+    date.setHours(hour, minute, 0, 0);
+    return date;
+  };
+
   const tasks = [
-    // User 1 tasks
+    // User 1 tasks - WITH TIME (Calendar view)
     {
-      title: 'Complete project documentation',
-      description: 'Write comprehensive API documentation for the Task Manager',
-      status: TaskStatus.IN_PROGRESS,
-      priority: TaskPriority.HIGH,
-      dueDate: new Date('2026-01-15'),
-      userId: user1.id,
-      categoryId: workCategory.id,
-    },
-    {
-      title: 'Fix bug in authentication',
-      description: 'Users cannot login with special characters in password',
+      title: 'Team meeting - Sprint Planning',
+      description: 'Quarterly review and planning session with the development team. Discuss Q1 goals, resource allocation, and upcoming features.',
       status: TaskStatus.TODO,
       priority: TaskPriority.HIGH,
-      dueDate: new Date('2026-01-10'),
+      startDateTime: getDate(0, 10, 0), // Monday 10:00
+      endDateTime: getDate(0, 11, 30),   // Monday 11:30
       userId: user1.id,
       categoryId: workCategory.id,
     },
     {
-      title: 'Team meeting',
-      description: 'Quarterly review and planning session',
+      title: 'Code review session',
+      description: 'Review pull requests from the backend team. Focus on authentication module and API endpoints.',
       status: TaskStatus.TODO,
       priority: TaskPriority.MEDIUM,
-      dueDate: new Date('2026-01-12'),
+      startDateTime: getDate(1, 14, 0), // Tuesday 14:00
+      endDateTime: getDate(1, 15, 30),   // Tuesday 15:30
+      userId: user1.id,
+      categoryId: workCategory.id,
+    },
+    {
+      title: 'Dentist appointment',
+      description: 'Regular checkup and teeth cleaning at Dr. Smith\'s clinic. Remember to bring insurance card.',
+      status: TaskStatus.TODO,
+      priority: TaskPriority.MEDIUM,
+      startDateTime: getDate(2, 16, 0), // Wednesday 16:00
+      endDateTime: getDate(2, 17, 0),   // Wednesday 17:00
+      userId: user1.id,
+      categoryId: personalCategory.id,
+    },
+    {
+      title: 'Online TypeScript course',
+      description: 'Advanced TypeScript patterns - generics and utility types. Complete modules 4-6 on Udemy.',
+      status: TaskStatus.IN_PROGRESS,
+      priority: TaskPriority.MEDIUM,
+      startDateTime: getDate(3, 18, 0), // Thursday 18:00
+      endDateTime: getDate(3, 20, 0),   // Thursday 20:00
+      userId: user1.id,
+      categoryId: studyCategory.id,
+    },
+    {
+      title: 'Client presentation',
+      description: 'Present final project demo to stakeholders. Prepare slides and live demo environment.',
+      status: TaskStatus.TODO,
+      priority: TaskPriority.HIGH,
+      startDateTime: getDate(4, 11, 0), // Friday 11:00
+      endDateTime: getDate(4, 12, 30),  // Friday 12:30
+      userId: user1.id,
+      categoryId: workCategory.id,
+    },
+    {
+      title: 'Weekend study session',
+      description: 'Deep dive into NestJS documentation - focus on guards, interceptors, and middleware patterns.',
+      status: TaskStatus.TODO,
+      priority: TaskPriority.LOW,
+      startDateTime: getDate(5, 10, 0), // Saturday 10:00
+      endDateTime: getDate(5, 13, 0),   // Saturday 13:00
+      userId: user1.id,
+      categoryId: studyCategory.id,
+    },
+    {
+      title: 'Family brunch',
+      description: 'Sunday brunch with family at Green Garden restaurant. Reservation at 12:00.',
+      status: TaskStatus.TODO,
+      priority: TaskPriority.MEDIUM,
+      startDateTime: getDate(6, 12, 0), // Sunday 12:00
+      endDateTime: getDate(6, 14, 0),   // Sunday 14:00
+      userId: user1.id,
+      categoryId: personalCategory.id,
+    },
+
+    // User 1 tasks - WITHOUT TIME (Kanban view)
+    {
+      title: 'Fix bug in authentication',
+      description: 'Users cannot login with special characters in password. Investigate bcrypt hashing issue.',
+      status: TaskStatus.TODO,
+      priority: TaskPriority.HIGH,
       userId: user1.id,
       categoryId: workCategory.id,
     },
     {
       title: 'Buy groceries',
-      description: 'Milk, bread, eggs, fruits',
+      description: 'Milk, bread, eggs, fruits, vegetables, chicken breast',
       status: TaskStatus.TODO,
-      priority: TaskPriority.MEDIUM,
-      dueDate: new Date('2026-01-09'),
+      priority: TaskPriority.LOW,
       userId: user1.id,
       categoryId: personalCategory.id,
     },
     {
       title: 'Call dentist',
       description: 'Schedule appointment for teeth cleaning',
-      status: TaskStatus.TODO,
+      status: TaskStatus.DONE,
       priority: TaskPriority.LOW,
       userId: user1.id,
       categoryId: personalCategory.id,
@@ -122,22 +188,13 @@ async function seed() {
       userId: user1.id,
       categoryId: studyCategory.id,
     },
-    {
-      title: 'Practice TypeScript',
-      description: 'Complete advanced exercises on type system',
-      status: TaskStatus.DONE,
-      priority: TaskPriority.MEDIUM,
-      completedAt: new Date('2026-01-05'),
-      userId: user1.id,
-      categoryId: studyCategory.id,
-    },
+
     // User 2 tasks
     {
       title: 'Morning run',
       description: '5km run in the park',
       status: TaskStatus.DONE,
       priority: TaskPriority.HIGH,
-      completedAt: new Date('2026-01-08'),
       userId: user2.id,
       categoryId: fitnessCategory.id,
     },
@@ -146,7 +203,6 @@ async function seed() {
       description: 'Leg day - squats, lunges, deadlifts',
       status: TaskStatus.TODO,
       priority: TaskPriority.HIGH,
-      dueDate: new Date('2026-01-09'),
       userId: user2.id,
       categoryId: fitnessCategory.id,
     },
