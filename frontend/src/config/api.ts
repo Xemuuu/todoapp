@@ -20,9 +20,10 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${savedToken}`;
     }
     
+    const isAuthEndpoint = config.url?.includes('/auth/');
     
     const savedUser = localStorage.getItem('user');
-    if (savedUser) {
+    if (savedUser && !isAuthEndpoint) {
       try {
         const user = JSON.parse(savedUser);
         if (user && user.id) {
