@@ -34,7 +34,6 @@ export class CategoriesService {
   async findAll(userId: number): Promise<Category[]> {
     return await this.categoryRepository.find({
       where: { userId },
-      relations: ['tasks'],
       order: { name: 'ASC' },
     });
   }
@@ -42,7 +41,6 @@ export class CategoriesService {
   async findOne(id: number, userId: number): Promise<Category> {
     const category = await this.categoryRepository.findOne({
       where: { id, userId },
-      relations: ['tasks'],
     });
 
     if (!category) {

@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, ManyToMany, JoinColumn, JoinTable } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Category } from '../../categories/entities/category.entity';
 
@@ -6,6 +6,7 @@ export enum TaskStatus {
   TODO = 'TODO',
   IN_PROGRESS = 'IN_PROGRESS',
   DONE = 'DONE',
+  FAILED = 'FAILED',
 }
 
 export enum TaskPriority {
@@ -39,11 +40,11 @@ export class Task {
   })
   priority: TaskPriority;
 
-  @Column({ type: 'timestamp', nullable: true, name: 'due_date' })
-  dueDate: Date;
+  @Column({ type: 'timestamp', name: 'start_date_time', nullable: true })
+  startDateTime: Date;
 
-  @Column({ type: 'timestamp', nullable: true, name: 'completed_at' })
-  completedAt: Date;
+  @Column({ type: 'timestamp', name: 'end_date_time', nullable: true })
+  endDateTime: Date;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
@@ -54,14 +55,15 @@ export class Task {
   @Column({ name: 'user_id' })
   userId: number;
 
-  @Column({ name: 'category_id', nullable: true })
-  categoryId: number;
-
   @ManyToOne(() => User, user => user.tasks, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => Category, category => category.tasks, { onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'category_id' })
-  category: Category;
+  @ManyToMany(() => Category, { eager: true })
+  @JoinTable({
+    name: 'task_categories',
+    joinColumn: { name: 'task_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'category_id', referencedColumnName: 'id' },
+  })
+  categories: Category[];
 }

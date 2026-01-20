@@ -39,6 +39,22 @@ services:
         condition: service_healthy
     command: npm run start:dev
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:3000
+      VITE_API_KEY: your-super-secret-api-key-2026
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    command: npm run dev -- --host 0.0.0.0
+
   pgadmin: 
     image: dpage/pgadmin4
     environment:

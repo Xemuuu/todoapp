@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { User } from '../users/entities/user.entity';
 import { LoginDto } from './dto/login.dto';
@@ -11,12 +12,12 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private jwtService: JwtService,
   ) {}
 
   async register(createUserDto: CreateUserDto) {
     const { email, password } = createUserDto;
 
-    // Check if user already exists
     const existingUser = await this.usersRepository.findOne({
       where: { email },
     });
@@ -25,10 +26,8 @@ export class AuthService {
       throw new ConflictException('User with this email already exists');
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
     const user = this.usersRepository.create({
       email,
       password: hashedPassword,
@@ -36,19 +35,22 @@ export class AuthService {
 
     const savedUser = await this.usersRepository.save(user);
 
-    // Return user without password
+    // Generate JWT token
+    const payload = { email: savedUser.email, sub: savedUser.id };
+    const accessToken = this.jwtService.sign(payload);
+
     const { password: _, ...userWithoutPassword } = savedUser;
     
     return {
       message: 'User registered successfully',
       user: userWithoutPassword,
+      accessToken,
     };
   }
 
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
 
-    // Find user by email
     const user = await this.usersRepository.findOne({
       where: { email },
     });
@@ -57,19 +59,22 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Return user data without password
+    // Generate JWT token
+    const payload = { email: user.email, sub: user.id };
+    const accessToken = this.jwtService.sign(payload);
+
     const { password: _, ...userWithoutPassword } = user;
     
     return {
       message: 'Login successful',
       user: userWithoutPassword,
+      accessToken,
     };
   }
 }

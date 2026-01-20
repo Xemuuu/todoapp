@@ -8,6 +8,12 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
+  // Enable CORS for frontend
+  app.enableCors({
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://frontend:5173'], // Vite dev server + Docker
+    credentials: true,
+  });
+  
   // Enable global validation
   app.useGlobalPipes(
     new ValidationPipe({

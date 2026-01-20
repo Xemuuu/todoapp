@@ -19,7 +19,4 @@ export class Category {
   @ManyToOne(() => User, user => user.categories, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
-
-  @OneToMany(() => Task, task => task.category)
-  tasks: Task[];
 }

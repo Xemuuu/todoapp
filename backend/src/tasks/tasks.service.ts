@@ -1,19 +1,33 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { Task, TaskStatus } from './entities/task.entity';
+import { Category } from '../categories/entities/category.entity';
 
 @Injectable()
 export class TasksService {
   constructor(
     @InjectRepository(Task)
     private readonly taskRepository: Repository<Task>,
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
   ) {}
 
   async create(createTaskDto: CreateTaskDto): Promise<Task> {
-    const task = this.taskRepository.create(createTaskDto);
+    const { categoryIds, ...taskData } = createTaskDto;
+    
+    const task = this.taskRepository.create(taskData);
+    
+    // Jeśli są kategorie, załaduj je
+    if (categoryIds && categoryIds.length > 0) {
+      const categories = await this.categoryRepository.findBy({
+        id: In(categoryIds),
+      });
+      task.categories = categories;
+    }
+    
     return await this.taskRepository.save(task);
   }
 
@@ -27,15 +41,15 @@ export class TasksService {
     const query = this.taskRepository
       .createQueryBuilder('task')
       .where('task.userId = :userId', { userId })
-      .leftJoinAndSelect('task.category', 'category')
-      .orderBy('task.createdAt', 'DESC');
+      .leftJoinAndSelect('task.categories', 'category')
+      .orderBy('task.startDateTime', 'ASC');
 
     if (status) {
       query.andWhere('task.status = :status', { status });
     }
 
     if (categoryId) {
-      query.andWhere('task.categoryId = :categoryId', { categoryId });
+      query.andWhere('category.id = :categoryId', { categoryId });
     }
 
     const [data, total] = await query
@@ -49,7 +63,7 @@ export class TasksService {
   async findOne(id: number, userId: number): Promise<Task> {
     const task = await this.taskRepository.findOne({
       where: { id, userId },
-      relations: ['category', 'user'],
+      relations: ['categories', 'user'],
     });
 
     if (!task) {
@@ -61,13 +75,22 @@ export class TasksService {
 
   async update(id: number, userId: number, updateTaskDto: UpdateTaskDto): Promise<Task> {
     const task = await this.findOne(id, userId);
+    const { categoryIds, ...taskData } = updateTaskDto;
 
-    // If status changed to DONE, set completedAt
-    if (updateTaskDto.status === TaskStatus.DONE && task.status !== TaskStatus.DONE) {
-      updateTaskDto['completedAt'] = new Date();
+    Object.assign(task, taskData);
+    
+    // Jeśli są nowe kategorie, zaktualizuj je
+    if (categoryIds !== undefined) {
+      if (categoryIds && categoryIds.length > 0) {
+        const categories = await this.categoryRepository.findBy({
+          id: In(categoryIds),
+        });
+        task.categories = categories;
+      } else {
+        task.categories = [];
+      }
     }
-
-    Object.assign(task, updateTaskDto);
+    
     return await this.taskRepository.save(task);
   }
 
