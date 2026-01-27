@@ -12,13 +12,11 @@ async function seed() {
 
   console.log('🌱 Seeding database...');
 
-  // Clear existing data
   console.log('🗑️  Clearing existing data...');
   await dataSource.query('DELETE FROM tasks');
   await dataSource.query('DELETE FROM categories');
   await dataSource.query('DELETE FROM users');
 
-  // Create users
   console.log('👤 Creating users...');
   const userRepo = dataSource.getRepository(User);
   
@@ -34,7 +32,6 @@ async function seed() {
 
   console.log(`✅ Created ${2} users`);
 
-  // Create categories
   console.log('📁 Creating categories...');
   const categoryRepo = dataSource.getRepository(Category);
 
@@ -64,11 +61,9 @@ async function seed() {
 
   console.log(`✅ Created ${4} categories`);
 
-  // Create tasks
   console.log('📝 Creating tasks...');
   const taskRepo = dataSource.getRepository(Task);
 
-  // Helper to get date for current week
   const today = new Date();
   const currentDay = today.getDay();
   const diff = today.getDate() - currentDay + (currentDay === 0 ? -6 : 1); // Monday as start
@@ -83,7 +78,6 @@ async function seed() {
   };
 
   const tasks = [
-    // User 1 tasks - WITH TIME (Calendar view)
     {
       title: 'Team meeting - Sprint Planning',
       description: 'Quarterly review and planning session with the development team. Discuss Q1 goals, resource allocation, and upcoming features.',

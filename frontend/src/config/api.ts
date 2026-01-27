@@ -27,7 +27,6 @@ api.interceptors.request.use(
       try {
         const user = JSON.parse(savedUser);
         if (user && user.id) {
-          // Dodaj userId do query params dla GET, DELETE, PATCH requests
           if (config.method === 'get' || config.method === 'delete' || config.method === 'patch') {
             if (!config.params) {
               config.params = {};
@@ -35,7 +34,6 @@ api.interceptors.request.use(
             config.params.userId = user.id;
           }
           
-          // Dodaj userId do body TYLKO dla POST requests (create)
           if (config.method === 'post' && config.data) {
             if (!config.data.userId) {
               config.data.userId = user.id;
@@ -54,7 +52,6 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor do obsługi błędów
 api.interceptors.response.use(
   (response) => {
     if (response.data && response.data.success && response.data.data) {

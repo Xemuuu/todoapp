@@ -41,10 +41,10 @@ export class Task {
   priority: TaskPriority;
 
   @Column({ type: 'timestamp', name: 'start_date_time', nullable: true })
-  startDateTime: Date;
+  startDateTime: Date | null;
 
   @Column({ type: 'timestamp', name: 'end_date_time', nullable: true })
-  endDateTime: Date;
+  endDateTime: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

@@ -66,7 +66,7 @@ cd todoapp
 
 ### Kroki instalacji
 
-#### 1. Uruchomienie całego stacku (Docker - REKOMENDOWANE)
+#### 1. Uruchomienie aplikacji (Docker)
 ```bash
 # Z głównego katalogu projektu uruchom wszystkie serwisy
 docker-compose up -d
@@ -76,9 +76,9 @@ docker-compose up -d
 # PostgreSQL: localhost:5432
 ```
 
-**Seed bazy danych (tworzy testowe konto):**
+#### 2. Seed bazy danych (opcjonalnie)
 ```bash
-# Wykonaj seed w kontenerze backendu
+# Wykonaj seed w kontenerze backendu (tworzy testowe konto z przykładowymi danymi)
 docker exec todoapp-backend-1 npm run seed
 
 # Testowe konto:
@@ -86,43 +86,7 @@ docker exec todoapp-backend-1 npm run seed
 # Hasło: password123
 ```
 
-#### 2. Uruchomienie manualne (alternatywnie)
-
-**2.1. Uruchomienie bazy danych (Docker)**
-```bash
-# Uruchom PostgreSQL w kontenerze
-docker-compose up -d db
-```
-
-**2.2. Instalacja i uruchomienie backendu**
-```bash
-cd backend
-
-# Instalacja zależności
-npm install
-
-# Seed bazy danych (opcjonalnie - tworzy testowego użytkownika)
-npm run seed
-
-# Uruchomienie w trybie development
-npm run start:dev
-```
-
-Backend będzie dostępny pod adresem: `http://localhost:3000`
-Dokumentacja API (Swagger): `http://localhost:3000/api`
-
-**2.3. Instalacja i uruchomienie frontendu**
-```bash
-cd frontend
-
-# Instalacja zależności
-npm install
-
-# Uruchomienie w trybie development
-npm run dev
-```
-
-Frontend będzie dostępny pod adresem: `http://localhost:5173`
+**Uwaga:** Dokumentacja API (Swagger) dostępna pod: `http://localhost:3000/api`
 
 ---
 
@@ -133,11 +97,13 @@ Frontend będzie dostępny pod adresem: `http://localhost:5173`
 #### Logowanie z testowym kontem
 - **Email**: `john@example.com`
 - **Hasło**: `password123`
+- **Zawartość**: Konto zawiera seedowane przykładowe zadania (7 w kalendarzu, 7 w Kanban) oraz 3 kategorie
 
 #### Rejestracja nowego konta
 1. Kliknij zakładkę "Rejestracja"
 2. Wprowadź email i hasło (dwukrotnie)
 3. Kliknij "Zarejestruj się"
+- **Zawartość**: Nowe konto jest puste - brak zadań i kategorii
 
 ### Główne funkcjonalności
 
@@ -162,8 +128,11 @@ Frontend będzie dostępny pod adresem: `http://localhost:5173`
    - **Priorytet**: LOW (🟢), MEDIUM (🟡), HIGH (🔴)
    - **Kategorie** (opcjonalne)
    - **Data/czas rozpoczęcia i zakończenia** (opcjonalne):
-     - Jeśli podane → zadanie trafi do kalendarza
-     - Jeśli puste → zadanie trafi do Kanban
+     - Jeśli podane → zadanie trafia do kalendarza
+     - Jeśli puste → zadanie trafia do Kanban
+     - **Przełączanie między widokami**:
+       - Dodanie daty do zadania z Kanban → przenosi do kalendarza
+       - Usunięcie daty z zadania w kalendarzu → przenosi do Kanban
 3. Kliknij "Zapisz"
 
 #### 4. Kategorie
@@ -179,19 +148,19 @@ Frontend będzie dostępny pod adresem: `http://localhost:5173`
 
 #### Strona logowania
 ![Login Page](img/login.png)
-*Strona logowania z animowanym tłem i glassmorphism*
+*Widok strony logowania*
 
 #### Widok kalendarza
 ![Calendar View](img/calendar.png)
-*Tygodniowy widok kalendarza z dynamicznymi wysokościami godzin*
+*Widok strony kalendarza*
 
 #### Widok Kanban
 ![Kanban View](img/kanban.png)
-*Tablica Kanban z 4 kolumnami statusów*
+*Widok tablicy Kanban*
 
 #### Dialog zadania
 ![Task Dialog](img/task-dialog.png)
-*Formularz tworzenia/edycji zadania z glassmorphism*
+*Widok formularza zadania*
 
 ---
 
@@ -244,66 +213,95 @@ services:
 
 ---
 
-## 6. Funkcje
+## 6. Kluczowe funkcjonalności
 
-### 1. System autentykacji (JWT)
-- **Rejestracja** - hashowanie haseł z bcrypt (salt rounds: 10)
-- **Logowanie** - generowanie JWT tokena z 7-dniową ważnością
-- **Persistent session** - token przechowywany w localStorage
-- **Auto-logout** - przekierowanie na login przy 401 Unauthorized
-- **Protected routes** - guard na endpointach wymagających autentykacji
+### 6.1. Autentykacja użytkowników (JWT)
+- **Rejestracja**: Hashowanie haseł za pomocą bcrypt (10 salt rounds)
+- **Logowanie**: Generowanie JWT tokena z 7-dniową ważnością
+- **Session management**: Token przechowywany w localStorage
+- **Auto-logout**: Automatyczne przekierowanie na stronę logowania przy wygaśnięciu tokenu (401)
+- **Protected routes**: Guard na endpointach backendu wymagających autentykacji
 
-### 2. Dual-view system (Unikalna funkcjonalność)
-**Automatyczny routing zadań**:
-- Zadania **z czasem** (`startDateTime` && `endDateTime`) → Widok kalendarza
-- Zadania **bez czasu** (`null` datetime) → Widok Kanban
-
-**Przełączanie widoków**:
-- Przycisk toggle z animacją
-- Filtrowanie po stronie frontendu w `TasksPage.tsx`
-
-### 3. REST API - Dostępne endpointy
-
-Aplikacja udostępnia pełne REST API z dokumentacją Swagger dostępną pod adresem: `http://localhost:3000/api/docs`
+### 6.2. REST API - Endpointy
 
 **Autentykacja:**
-- `POST /auth/register` - Rejestracja nowego użytkownika (email, password)
-- `POST /auth/login` - Logowanie (zwraca JWT token i dane użytkownika)
+- `POST /auth/register` - Rejestracja (email, password)
+- `POST /auth/login` - Logowanie (zwraca token JWT + dane użytkownika)
 
-**Zadania (Tasks):**
-- `GET /tasks` - Pobierz wszystkie zadania użytkownika (filtrowanie: status, categoryId, paginacja)
-- `POST /tasks` - Utwórz nowe zadanie (title, description, status, priority, startDateTime, endDateTime, categoryIds)
-- `GET /tasks/:id` - Pobierz szczegóły pojedynczego zadania
-- `PATCH /tasks/:id` - Zaktualizuj zadanie (wszystkie pola opcjonalne)
-- `DELETE /tasks/:id` - Usuń zadanie
+**Zadania:**
+- `GET /tasks` - Lista zadań użytkownika (z filtrowaniem i paginacją)
+- `POST /tasks` - Tworzenie nowego zadania
+- `GET /tasks/:id` - Szczegóły pojedynczego zadania
+- `PATCH /tasks/:id` - Aktualizacja zadania (wszystkie pola opcjonalne)
+- `DELETE /tasks/:id` - Usuwanie zadania
 
-**Kategorie (Categories):**
-- `GET /categories` - Pobierz wszystkie kategorie użytkownika
-- `POST /categories` - Utwórz nową kategorię (name, color)
+**Kategorie:**
+- `GET /categories` - Lista kategorii użytkownika
+- `POST /categories` - Tworzenie nowej kategorii (name, color)
 
-**Zabezpieczenia:**
-- Wszystkie endpointy (oprócz `/auth/*`) wymagają:
-  - Header `X-API-KEY` - klucz API z pliku `.env`
-  - Header `Authorization: Bearer <token>` - JWT token (po zalogowaniu)
-- Każdy request automatycznie scope'owany do zalogowanego użytkownika (`userId`)
-- Walidacja danych wejściowych przez `class-validator` (DTO)
+**Dokumentacja API**: Swagger dostępny pod `http://localhost:3000/api`
 
-**Format odpowiedzi:**
-Wszystkie response'y są owinięte w standardowy format przez `TransformInterceptor`:
-```json
-{
-  "success": true,
-  "data": { /* właściwa odpowiedź */ },
-  "timestamp": "2026-01-20T12:00:00.000Z",
-  "path": "/tasks"
-}
+### 6.3. Walidacja danych
+- **DTO (Data Transfer Objects)**: Walidacja na poziomie backendu za pomocą `class-validator`
+- **Dekoratory walidacyjne**: 
+  - `@IsEmail()` - walidacja formatu email
+  - `@IsDateString()` - walidacja formatów dat (ISO 8601)
+  - `@IsEnum()` - walidacja wartości enum (status, priorytet)
+  - `@ValidateIf()` - warunkowa walidacja (np. puste stringi dla dat)
+- **Walidacja konfliktów**: Sprawdzanie nakładania się zadań w kalendarzu
+- **Obsługa błędów**: Automatyczne zwracanie `400 Bad Request` z listą błędów walidacji
+
+### 6.4. Interceptory i middleware
+- **TransformInterceptor**: Opakowuje wszystkie response'y w standardowy format:
+  ```json
+  {
+    "success": true,
+    "data": { /* dane */ },
+    "timestamp": "2026-01-26T12:00:00.000Z",
+    "path": "/tasks"
+  }
+  ```
+- **ApiKeyGuard**: Walidacja klucza API (`X-API-KEY` header) na wszystkich endpointach
+- **JwtAuthGuard**: Weryfikacja tokena JWT i ekstrakcja danych użytkownika
+- **Axios interceptor (frontend)**: Automatyczne dodawanie `userId` do query params (z wyłączeniem `/auth/*`)
+
+### 6.5. Zabezpieczenia
+- **API Key**: Wymagany header `X-API-KEY` na wszystkich endpointach
+- **JWT Authentication**: Bearer token w headerze `Authorization` (oprócz endpointów `/auth/*`)
+- **User scoping**: Każde zapytanie automatycznie filtrowane po `userId` - użytkownik widzi tylko swoje dane
+- **Password hashing**: Hasła hashowane bcrypt przed zapisem do bazy
+- **CORS**: Konfiguracja allowed origins dla bezpiecznej komunikacji frontend-backend
+
+### 6.6. Dual-view system (Unikalna funkcjonalność)
+
+System automatycznego routingu zadań między dwoma widokami oparty na obecności pól datetime:
+
+**Mechanizm działania:**
+- **Zadania z czasem** - posiadające wartości `startDateTime` i `endDateTime` wyświetlane w **widoku kalendarza**
+- **Zadania bez czasu** - z wartościami `null` dla datetime wyświetlane w **widoku Kanban**
+
+**Dynamiczne przełączanie:**
+- Dodanie dat do zadania z Kanban → automatyczny transfer do kalendarza
+- Usunięcie dat z zadania w kalendarzu → automatyczny transfer do Kanban
+- Implementacja: walidacja `@ValidateIf()` pozwala na puste stringi, które konwertowane są na `null` w serwisie
+
+**Backend (TypeORM Entity):**
+```typescript
+@Column({ type: 'timestamp', nullable: true })
+startDateTime: Date | null;
+
+@Column({ type: 'timestamp', nullable: true })
+endDateTime: Date | null;
 ```
 
-**Obsługa błędów:**
-- `400 Bad Request` - błąd walidacji (np. nieprawidłowy email)
-- `401 Unauthorized` - brak lub nieprawidłowy token JWT
-- `404 Not Found` - zasób nie istnieje
-- `409 Conflict` - konflikt (np. email już istnieje przy rejestracji)
+**Frontend (filtrowanie w TasksPage):**
+- `tasksWithTime` - filtr: `task.startDateTime && task.endDateTime`
+- `tasksWithoutTime` - filtr: `!task.startDateTime && !task.endDateTime`
+
+**Walidacja czasowa:**
+- Zadania z czasem: wymagane oba pola (start + end)
+- Sprawdzanie nakładania się zadań w kalendarzu
+- Data zakończenia musi być późniejsza niż data rozpoczęcia
 
 ---
 
@@ -465,51 +463,283 @@ todoapp/
 
 ### Główne elementy kodu
 
-#### 1. Backend - Task Entity (Model)
+#### 1. Backend - Task Entity
 
-**Lokalizacja**: `backend/src/tasks/entities/task.entity.ts`
+**Plik**: `backend/src/tasks/entities/task.entity.ts`
 
-Entity Task definiuje model zadania w bazie danych wykorzystując dekoratory TypeORM. Kluczowe aspekty:
-- Pola `startDateTime` i `endDateTime` są opcjonalne (`nullable: true`) - umożliwia to dual-view system
-- Enumy `TaskStatus` (TODO, IN_PROGRESS, DONE, FAILED) i `TaskPriority` (LOW, MEDIUM, HIGH) zapewniają type safety
-- Relacja Many-to-One z User - każdy task należy do użytkownika
-- Relacja Many-to-Many z Category - task może mieć wiele kategorii, kategoria wiele tasków
-- Automatyczne timestampy (`createdAt`, `updatedAt`) dzięki dekoratorom TypeORM
+Definicja modelu zadania w bazie danych:
 
-#### 2. Backend - Tasks Service (Business Logic)
+```typescript
+@Entity('tasks')
+export class Task {
+  @PrimaryGeneratedColumn()
+  id: number;
 
-**Lokalizacja**: `backend/src/tasks/tasks.service.ts`
+  @Column()
+  title: string;
 
-Serwis Tasks zawiera logikę biznesową aplikacji:
-- **Dependency Injection** - repositories wstrzykiwane przez konstruktor (NestJS pattern)
-- **Metoda create()** - tworzy task i automatycznie obsługuje relacjeMany-to-Many z kategoriami
-- **Metoda findAll()** - QueryBuilder TypeORM do zaawansowanych zapytań z JOIN, filtrowaniem i paginacją
-- **Metoda update()** - aktualizuje zarówno pola taska jak i przypisane kategorie
-- Wszystkie operacje są scope'owane do aktualnego użytkownika (userId)
+  @Column({ type: 'text', nullable: true })
+  description: string;
 
-#### 3. Frontend - WeekView Component (Widok)
+  @Column({ type: 'enum', enum: TaskStatus, default: TaskStatus.TODO })
+  status: TaskStatus;
 
-**Lokalizacja**: `frontend/src/components/WeekView.tsx`
+  @Column({ type: 'enum', enum: TaskPriority, default: TaskPriority.MEDIUM })
+  priority: TaskPriority;
 
-Komponent WeekView wyświetla tygodniowy widok kalendarza z zaawansowanymi funkcjami:
-- **Funkcja parseLocalDate()** - rozwiązuje problem timezone (backend zwraca UTC, frontend wyświetla lokalny czas)
-- **Dynamiczne wysokości godzin** - godziny z taskami mają 130px, puste godziny 50px (optymalizacja przestrzeni)
-- **Funkcja getTaskStyle()** - oblicza pozycję i wysokość taska na podstawie czasu rozpoczęcia/zakończenia, uwzględniając zmienne wysokości godzin
-- **Absolutne pozycjonowanie** - taski są nakładane na siatkę godzin używając position: absolute
-- **Conditional rendering** - krótkie taski (≤30 min) mają kompaktowy widok, długie pokazują pełne informacje
-- **Glassmorphism UI** - półprzezroczyste tła z backdrop-filter: blur()
+  @Column({ type: 'timestamp', nullable: true })
+  startDateTime: Date | null;
 
-#### 4. Frontend - TasksPage (Controller)
+  @Column({ type: 'timestamp', nullable: true })
+  endDateTime: Date | null;
 
-**Lokalizacja**: `frontend/src/pages/TasksPage.tsx`
+  @ManyToOne(() => User, (user) => user.tasks)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
-Główny komponent-kontroler aplikacji:
-- **Container Component** - zarządza całym stanem aplikacji (tasks, categories, filters, dialogs)
-- **Dual-view logic** - filtruje taski: z czasem → Calendar, bez czasu → Kanban
-- **Wyszukiwanie i filtrowanie** - po nazwie taska i kategorii
-- **Week navigation** - oblicza początek tygodnia (poniedziałek) i umożliwia nawigację
-- **Conditional rendering** - dynamicznie przełącza między WeekView a KanbanView
-- **Lifting State Up** - dialogi (TaskDialog, CategoryDialog) są zarządzane centralnie i przekazują callbacks
+  @ManyToMany(() => Category)
+  @JoinTable({ name: 'task_categories' })
+  categories: Category[];
+}
+```
+
+**Co robi**: Model zadania w TypeORM. Pola `startDateTime` i `endDateTime` mają `nullable: true` - jeśli są wypełnione to task idzie do kalendarza, jeśli są null to ląduje w Kanban. Dekorator `@ManyToOne` definiuje relację z userem (każdy task należy do jednego użytkownika), a `@ManyToMany` z kategoriami (task może mieć kilka kategorii, kategoria może być w kilku taskach). TypeORM automatycznie tworzy tabelę pośrednią `task_categories` do obsługi relacji Many-to-Many.
+
+#### 2. Backend - Tasks Service
+
+**Plik**: `backend/src/tasks/tasks.service.ts`
+
+Fragment metody update obsługującej zmianę dat:
+
+```typescript
+async update(id: number, userId: number, updateTaskDto: UpdateTaskDto): Promise<Task> {
+  const task = await this.findOne(id, userId);
+  const { categoryIds, startDateTime, endDateTime, ...taskData } = updateTaskDto;
+
+  Object.assign(task, taskData);
+  
+  // Pusty string = usuń datę (ustaw null)
+  if ('startDateTime' in updateTaskDto) {
+    task.startDateTime = (startDateTime && startDateTime.trim()) 
+      ? new Date(startDateTime) 
+      : null;
+  }
+  if ('endDateTime' in updateTaskDto) {
+    task.endDateTime = (endDateTime && endDateTime.trim()) 
+      ? new Date(endDateTime) 
+      : null;
+  }
+  
+  // Aktualizacja kategorii
+  if (categoryIds !== undefined) {
+    if (categoryIds && categoryIds.length > 0) {
+      const categories = await this.categoryRepository.findBy({
+        id: In(categoryIds),
+      });
+      task.categories = categories;
+    } else {
+      task.categories = [];
+    }
+  }
+
+  return await this.taskRepository.save(task);
+}
+```
+
+**Co robi**: Pobiera task z bazy sprawdzając czy należy do aktualnego użytkownika. Destrukturyzuje dane z DTO wyciągając categoryIds i daty osobno, resztę pakuje do taskData. Kluczowa część to obsługa dat - sprawdza czy w DTO jest pole startDateTime/endDateTime (operator `in`), jeśli jest to sprawdza czy string nie jest pusty. Jak jest pusty to ustawia null, jak jest wypełniony to parsuje na obiekt Date. Dzięki temu pusty string z frontendu kasuje datę i przenosi task do Kanban. Na końcu aktualizuje kategorie - pobiera je z bazy po ID i przypisuje do taska, TypeORM sam zaktualizuje tabelę pośrednią.
+
+#### 3. Backend - Create Task DTO
+
+**Plik**: `backend/src/tasks/dto/create-task.dto.ts`
+
+Walidacja danych wejściowych:
+
+```typescript
+export class CreateTaskDto {
+  @IsString()
+  @IsNotEmpty()
+  title: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsEnum(TaskStatus)
+  @IsOptional()
+  status?: TaskStatus;
+
+  @IsEnum(TaskPriority)
+  @IsOptional()
+  priority?: TaskPriority;
+
+  @ValidateIf((o) => o.startDateTime && o.startDateTime.trim() !== '')
+  @IsDateString()
+  @IsOptional()
+  startDateTime?: string;
+
+  @ValidateIf((o) => o.endDateTime && o.endDateTime.trim() !== '')
+  @IsDateString()
+  @IsOptional()
+  endDateTime?: string;
+}
+```
+
+**Co robi**: Waliduje dane z frontendu zanim trafią do serwisu. Każde pole ma dekoratory z `class-validator` - `@IsString()` sprawdza czy to string, `@IsNotEmpty()` czy nie jest pusty, `@IsEnum()` czy wartość jest w dozwolonym zbiorze. Kluczowy jest `@ValidateIf()` przy datach - normalnie `@IsDateString()` odrzuciłby pusty string jako błędną datę. Ale `@ValidateIf()` mówi "sprawdź @IsDateString() tylko wtedy gdy pole istnieje i nie jest pustym stringiem". Dzięki temu pusty string przechodzi walidację i trafia do serwisu gdzie konwertuje się na null.
+
+#### 4. Frontend - Axios Interceptor
+
+**Plik**: `frontend/src/config/api.ts`
+
+Automatyczne dodawanie userId do requestów:
+
+```typescript
+api.interceptors.request.use((config) => {
+  const savedToken = localStorage.getItem('token');
+  if (savedToken) {
+    config.headers.Authorization = `Bearer ${savedToken}`;
+  }
+  
+  const isAuthEndpoint = config.url?.includes('/auth/');
+  const savedUser = localStorage.getItem('user');
+  
+  if (savedUser && !isAuthEndpoint) {
+    const user = JSON.parse(savedUser);
+    if (user && user.id) {
+      // Do GET/DELETE/PATCH dodaj userId do URL
+      if (config.method === 'get' || config.method === 'delete' || config.method === 'patch') {
+        config.params = { ...config.params, userId: user.id };
+      }
+      // Do POST dodaj userId do body
+      if (config.method === 'post' && config.data) {
+        config.data.userId = user.id;
+      }
+    }
+  }
+  return config;
+});
+```
+
+**Co robi**: Interceptor Axios przechwytuje każdy request przed wysłaniem. Najpierw sprawdza localStorage czy mamy token JWT i jak jest to dodaje go do headera Authorization. Potem sprawdza czy to nie jest endpoint autentykacji (login/register) - tam nie chcemy dodawać userId bo użytkownik jeszcze nie istnieje. Dla pozostałych endpointów wyciąga usera z localStorage i dodaje jego ID - dla GET/DELETE/PATCH jako query param w URL (?userId=10), dla POST do body requestu. Dzięki temu nie musimy ręcznie dodawać userId w każdym wywołaniu serwisu, interceptor robi to automatycznie.
+
+#### 5. Frontend - TasksPage
+
+**Plik**: `frontend/src/pages/TasksPage.tsx`
+
+Logika dual-view (filtrowanie tasków):
+
+```typescript
+const TasksPage: React.FC = () => {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [view, setView] = useState<'calendar' | 'kanban'>('calendar');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+
+  // Filtrowanie po nazwie i kategorii
+  const filteredTasks = tasks.filter(task => {
+    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = !selectedCategoryId || 
+      task.categories?.some(cat => cat.id === selectedCategoryId);
+    return matchesSearch && matchesCategory;
+  });
+
+  // Podział na Calendar vs Kanban
+  const tasksWithTime = filteredTasks.filter(
+    task => task.startDateTime && task.endDateTime
+  );
+  const tasksWithoutTime = filteredTasks.filter(
+    task => !task.startDateTime && !task.endDateTime
+  );
+
+  return (
+    <>
+      {view === 'calendar' ? (
+        <WeekView tasks={tasksWithTime} onTaskClick={handleTaskClick} />
+      ) : (
+        <KanbanView tasks={tasksWithoutTime} onTaskClick={handleTaskClick} />
+      )}
+    </>
+  );
+};
+```
+
+**Co robi**: Główny komponent zarządzający całą stroną z taskami. Trzyma w state wszystkie taski, aktualny widok (calendar/kanban), zapytanie wyszukiwania i wybraną kategorię. Najpierw filtruje wszystkie taski po nazwie (case-insensitive search po title) i kategorii (sprawdza czy task ma kategorię o danym ID metodą `some()`). Potem dzieli przefiltrowane taski na dwie grupy - `tasksWithTime` to te które mają obie daty (startDateTime i endDateTime), `tasksWithoutTime` to te które nie mają żadnej. W JSX renderuje odpowiedni komponent w zależności od wybranego widoku - WeekView dostaje taski z czasem, KanbanView te bez czasu.
+
+#### 6. Frontend - WeekView
+
+**Plik**: `frontend/src/components/WeekView.tsx`
+
+Dynamiczne obliczanie pozycji tasków w kalendarzu:
+
+```typescript
+// Sprawdź które godziny mają taski w całym tygodniu
+const getHoursWithTasks = (): Set<number> => {
+  const hoursSet = new Set<number>();
+  
+  days.forEach(day => {
+    const dayTasks = tasks.filter(task => {
+      if (!task.startDateTime || !task.endDateTime) return false;
+      const taskStart = parseLocalDate(task.startDateTime);
+      const taskEnd = parseLocalDate(task.endDateTime);
+      return taskStart < dayEnd && taskEnd > dayStart;
+    });
+    
+    dayTasks.forEach(task => {
+      const taskStart = parseLocalDate(task.startDateTime);
+      const taskEnd = parseLocalDate(task.endDateTime);
+      
+      for (let h = 0; h < 24; h++) {
+        const hourStartTime = new Date(day);
+        hourStartTime.setHours(h, 0, 0, 0);
+        const hourEndTime = new Date(day);
+        hourEndTime.setHours(h + 1, 0, 0, 0);
+        
+        if (taskStart < hourEndTime && taskEnd > hourStartTime) {
+          hoursSet.add(h);
+        }
+      }
+    });
+  });
+  
+  return hoursSet;
+};
+
+const getHourHeight = (hour: number): number => {
+  return hoursWithTasks.has(hour) ? 140 : 50;
+};
+
+const getTaskStyle = (task: Task, date: Date) => {
+  const taskStart = parseLocalDate(task.startDateTime);
+  const taskEnd = parseLocalDate(task.endDateTime);
+  
+  const startHour = taskStart.getHours() + taskStart.getMinutes() / 60;
+  const endHour = taskEnd.getHours() + taskEnd.getMinutes() / 60;
+  
+  const startHourFloor = Math.floor(startHour);
+  const endHourFloor = Math.floor(endHour);
+  
+  // Oblicz pozycję top
+  let top = getHourTop(startHourFloor);
+  const minuteOffset = (startHour - startHourFloor) * getHourHeight(startHourFloor);
+  top += minuteOffset;
+
+  // Oblicz wysokość
+  let height = 0;
+  for (let h = startHourFloor; h < endHourFloor && h < 24; h++) {
+    const hourHeight = getHourHeight(h);
+    if (h === startHourFloor && endHour - startHour <= 1) {
+      height += (endHour - startHour) * hourHeight;
+    } else if (h === startHourFloor) {
+      height += (1 - (startHour - startHourFloor)) * hourHeight;
+    } else {
+      height += hourHeight;
+    }
+  }
+  
+  return { top: `${top}px`, height: `${height}px` };
+};
+```
+
+**Co robi**: Komponent widoku kalendarza z dynamicznymi wysokościami godzin. Funkcja `getHoursWithTasks()` przechodzi przez wszystkie dni tygodnia i sprawdza które godziny (0-23) mają jakiekolwiek taski - zwraca Set z numerami godzin. Używa tego `getHourHeight()` - godziny z taskami mają 140px wysokości, puste tylko 50px żeby nie marnować miejsca. `getTaskStyle()` to kluczowa funkcja licząca gdzie narysować task. Najpierw parsuje datę taska na godzinę dziesiętną (np. 14:30 = 14.5), potem oblicza pozycję top - sumuje wysokości wszystkich wcześniejszych godzin funkcją `getHourTop()` i dodaje offset w minutach. Wysokość liczy iterując przez wszystkie godziny które task zajmuje i sumując ich wysokości (mogą być różne - 140 lub 50). Obsługuje też przypadki gdy task zaczyna się w środku godziny lub kończy w środku. Zwraca style CSS do absolute positioning.
 
 ---
 

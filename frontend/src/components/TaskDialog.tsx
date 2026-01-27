@@ -38,7 +38,6 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, categories, 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Wypełnij formularz przy edycji
   useEffect(() => {
     if (task) {
       setTitle(task.title);
@@ -66,17 +65,14 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, categories, 
   const handleSubmit = async () => {
     if (!user || !title.trim()) return;
 
-    // Normalizuj puste stringi do pustych wartości
     const start = startDateTime.trim();
     const end = endDateTime.trim();
 
-    // Walidacja: obydwa pola datetime muszą być wypełnione lub obydwa puste
     if ((start && !end) || (!start && end)) {
       setError('Podaj zarówno datę rozpoczęcia jak i zakończenia, lub zostaw oba pola puste dla taska bez czasu.');
       return;
     }
 
-    // Walidacja: data zakończenia musi być po dacie rozpoczęcia
     if (start && end) {
       const newStart = new Date(start);
       const newEnd = new Date(end);
@@ -86,14 +82,11 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, categories, 
         return;
       }
       
-      // Walidacja: sprawdź czy istnieje już task w tym czasie
       const hasConflict = allTasks.some(existingTask => {
-        // Pomiń aktualnie edytowany task podczas edycji
         if (task && existingTask.id === task.id) {
           return false;
         }
         
-        // Pomiń taski bez dat
         if (!existingTask.startDateTime || !existingTask.endDateTime) {
           return false;
         }
@@ -101,7 +94,7 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, categories, 
         const existingStart = new Date(existingTask.startDateTime);
         const existingEnd = new Date(existingTask.endDateTime);
         
-        // Sprawdź czy przedziały się nakładają
+
         return (
           (newStart >= existingStart && newStart < existingEnd) ||
           (newEnd > existingStart && newEnd <= existingEnd) ||
@@ -119,19 +112,18 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, categories, 
     setLoading(true);
     try {
       if (task) {
-        // Edycja
-        const updateData: UpdateTaskDto = {
+        const updateData: any = {
           title,
           description: description || undefined,
           status,
           priority,
           categoryIds: categoryIds.length > 0 ? categoryIds : undefined,
-          startDateTime: startDateTime.trim() || undefined,
-          endDateTime: endDateTime.trim() || undefined,
+          // Puste stringi = usuń datę (backend konwertuje na null)
+          startDateTime: start,
+          endDateTime: end,
         };
         await tasksService.update(task.id, updateData);
       } else {
-        // Tworzenie
         const createData: CreateTaskDto = {
           title,
           description: description || undefined,
@@ -139,9 +131,10 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, categories, 
           priority,
           userId: user.id,
           categoryIds: categoryIds.length > 0 ? categoryIds : undefined,
-          startDateTime: startDateTime.trim() || undefined,
-          endDateTime: endDateTime.trim() || undefined,
+          startDateTime: start || undefined,
+          endDateTime: end || undefined,
         };
+        console.log('📤 Sending create:', createData);
         await tasksService.create(createData);
       }
       onSave();

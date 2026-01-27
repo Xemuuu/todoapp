@@ -75,11 +75,18 @@ export class TasksService {
 
   async update(id: number, userId: number, updateTaskDto: UpdateTaskDto): Promise<Task> {
     const task = await this.findOne(id, userId);
-    const { categoryIds, ...taskData } = updateTaskDto;
+    const { categoryIds, startDateTime, endDateTime, ...taskData } = updateTaskDto;
 
     Object.assign(task, taskData);
     
-    // Jeśli są nowe kategorie, zaktualizuj je
+    // Pusty string = usuń datę (ustaw null)
+    if ('startDateTime' in updateTaskDto) {
+      task.startDateTime = (startDateTime && startDateTime.trim()) ? new Date(startDateTime) : null;
+    }
+    if ('endDateTime' in updateTaskDto) {
+      task.endDateTime = (endDateTime && endDateTime.trim()) ? new Date(endDateTime) : null;
+    }
+    
     if (categoryIds !== undefined) {
       if (categoryIds && categoryIds.length > 0) {
         const categories = await this.categoryRepository.findBy({

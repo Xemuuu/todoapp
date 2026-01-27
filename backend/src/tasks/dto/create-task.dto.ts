@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional, IsDateString, IsNumber, IsArray } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsOptional, IsDateString, IsNumber, IsArray, ValidateIf } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { TaskStatus, TaskPriority } from '../entities/task.entity';
 
@@ -24,11 +24,13 @@ export class CreateTaskDto {
   priority?: TaskPriority;
 
   @ApiPropertyOptional({ example: '2026-01-15T09:00:00Z', description: 'Start date and time in ISO format' })
+  @ValidateIf((o) => o.startDateTime && o.startDateTime.trim() !== '')
   @IsDateString()
   @IsOptional()
   startDateTime?: string;
 
   @ApiPropertyOptional({ example: '2026-01-15T17:00:00Z', description: 'End date and time in ISO format' })
+  @ValidateIf((o) => o.endDateTime && o.endDateTime.trim() !== '')
   @IsDateString()
   @IsOptional()
   endDateTime?: string;

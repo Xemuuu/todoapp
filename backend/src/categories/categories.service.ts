@@ -13,7 +13,6 @@ export class CategoriesService {
   ) {}
 
   async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
-    // Check if category with same name already exists for this user
     const existing = await this.categoryRepository.findOne({
       where: {
         name: createCategoryDto.name,
@@ -53,7 +52,6 @@ export class CategoriesService {
   async update(id: number, userId: number, updateCategoryDto: UpdateCategoryDto): Promise<Category> {
     const category = await this.findOne(id, userId);
 
-    // Check for name conflict if name is being updated
     if (updateCategoryDto.name && updateCategoryDto.name !== category.name) {
       const existing = await this.categoryRepository.findOne({
         where: {

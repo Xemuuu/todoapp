@@ -23,13 +23,10 @@ async function bootstrap() {
     }),
   );
 
-  // Enable global API Key guard
   app.useGlobalGuards(new ApiKeyGuard());
-
-  // Enable global response transformation
   app.useGlobalInterceptors(new TransformInterceptor());
 
-  // Swagger configuration
+
   const config = new DocumentBuilder()
     .setTitle('Task Manager API')
     .setDescription('REST API for Task Manager application')

@@ -24,7 +24,6 @@ export const WeekView = ({ tasks, weekStart, onTaskClick }: WeekViewProps) => {
     return date;
   });
 
-  // Parsuj datę jako lokalny czas (ignoruj UTC)
   const parseLocalDate = (dateString: string): Date => {
     const cleanDate = dateString.replace('Z', '');
     return new Date(cleanDate);
@@ -53,7 +52,6 @@ export const WeekView = ({ tasks, weekStart, onTaskClick }: WeekViewProps) => {
     });
   };
 
-  // Sprawdź które godziny mają taski w całym tygodniu
   const getHoursWithTasks = (): Set<number> => {
     const hoursSet = new Set<number>();
     
@@ -81,7 +79,6 @@ export const WeekView = ({ tasks, weekStart, onTaskClick }: WeekViewProps) => {
           const hourEndTime = new Date(day);
           hourEndTime.setHours(h + 1, 0, 0, 0);
           
-          // Sprawdź czy task faktycznie trwa w tej godzinie
           if (taskStart < hourEndTime && taskEnd > hourStartTime) {
             hoursSet.add(h);
           }
@@ -94,12 +91,10 @@ export const WeekView = ({ tasks, weekStart, onTaskClick }: WeekViewProps) => {
 
   const hoursWithTasks = getHoursWithTasks();
   
-  // Dynamiczne wysokości godzin
   const getHourHeight = (hour: number): number => {
     return hoursWithTasks.has(hour) ? 140 : 50;
   };
 
-  // Oblicz pozycję Y dla danej godziny
   const getHourTop = (hour: number): number => {
     let top = 0;
     for (let h = 0; h < hour; h++) {
@@ -134,23 +129,18 @@ export const WeekView = ({ tasks, weekStart, onTaskClick }: WeekViewProps) => {
     const startHourFloor = Math.floor(startHour);
     const endHourFloor = Math.floor(endHour);
     
-    // Oblicz pozycję top
     let top = getHourTop(startHourFloor);
     const minuteOffset = (startHour - startHourFloor) * getHourHeight(startHourFloor);
     top += minuteOffset + gap;
 
-    // Oblicz wysokość
     let height = 0;
     for (let h = startHourFloor; h < endHourFloor && h < 24; h++) {
       const hourHeight = getHourHeight(h);
       if (h === startHourFloor && endHour - startHour <= 1) {
-        // Task mieści się w jednej godzinie lub mniej
         height += (endHour - startHour) * hourHeight;
       } else if (h === startHourFloor) {
-        // Pierwsza godzina
         height += (1 - (startHour - startHourFloor)) * hourHeight;
       } else {
-        // Pełne godziny pośrednie
         height += hourHeight;
       }
     }
@@ -382,7 +372,7 @@ export const WeekView = ({ tasks, weekStart, onTaskClick }: WeekViewProps) => {
                         </Box>
                       </Box>
                     ) : (
-                      // Wersja dla dłuższych tasków - pełny layout
+
                       <>
                         {/* Górna część - Tytuł i Godziny */}
                         <Box>
